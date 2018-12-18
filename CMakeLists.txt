@@ -28,7 +28,7 @@ generate_messages(DEPENDENCIES std_msgs)
 ##Declare a catkin package 
 catkin_package() #is it necessary?
 
-include_directories(include ${catkin_INCLUDE_DIRS})
+include_directories(${catkin_INCLUDE_DIRS})
 
 #Project directory 
 include_directories(${PROJECT_SOURCE_DIR}/include)
