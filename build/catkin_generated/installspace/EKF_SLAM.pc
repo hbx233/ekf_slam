@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: EKF_SLAM
+Description: Description of EKF_SLAM
+Version: 1.0.0
+Cflags: 
+Libs: -L/usr/local/lib 
+Requires: 

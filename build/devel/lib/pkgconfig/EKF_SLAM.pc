@@ -1,0 +1,8 @@
+prefix=/home/hbx/git/ekf_slam/build/devel
+
+Name: EKF_SLAM
+Description: Description of EKF_SLAM
+Version: 1.0.0
+Cflags: 
+Libs: -L/home/hbx/git/ekf_slam/build/devel/lib 
+Requires: 
