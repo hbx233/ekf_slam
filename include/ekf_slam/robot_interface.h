@@ -73,37 +73,52 @@ public:
 private:
   //robot configuration 
   double robot_diameter_{0};
+  string topic_robot_diameter_;
+  ros::Subscriber sub_robot_diameter_;
+  
   double robot_wheel_diameter_{0};
+  string topic_robot_wheel_diameter_;
+  ros::Subscriber sub_robot_wheel_diameter_;
+  
   double robot_wheel_distance_{0};
+  string topic_robot_wheel_distance_;
+  ros::Subscriber sub_robot_wheel_distance_;
+  
   //laser frame in robot reference frame 
   SE2 T_robot_laser_;
+  string topic_T_robot_laser_;
+  ros::Subscriber sub_T_robot_laser_;
+  
+  PointCloud<PointXY> laser_scan_coord_robot_;
+  RointCloud<PointXY> laser_scan_coord_world_;
+  string topic_laser_scan;
+  ros::Subscriber sub_laser_scan;
   
   //robot frame in world reference frame, ground truth  
   SE2 T_world_robot_;
+  string T_world_robot_topic_;
+  ros::Subscriber sub_T_world_robot_;
+  
   //estimated robot frame in world reference frame 
   SE2 T_world_estimated_;
+  string T_world_estimated_topic_;
+  ros::Subscriber sub_T_world_estimated_;
+  ros::Publisher pub_T_world_estimated_;
+  
   //target frame in world reference frame 
   SE2 T_world_target_;
+  string T_world_target_topic_;
+  ros::Subscriber sub_T_world_target_;
+  ros::Publisher pub_T_world_target_;
+  
+  double left_wheel_vel_{0};
+  string left_wheel_vel_topic_;
+  ros::Publisher pub_left_wheel_vel_;
+  
+  double right_wheel_vel_{0};
+  string right_wheel_vel_topic_;
+  ros::Publisher pub_right_wheel_vel_;
 
-private:
-  ros::Subscriber sub_robot_wheel_dist_;
-  ros::Subscriber sub_laser_frame_;
-  
-  //subscriber for laser scan reading 
-  ros::Subscriber sub_laser_scan_;
-  
-  //subscribers for robot state
-  ros::Subscriber sub_T_wr_;
-  ros::Subscriber sub_T_we_;
-  ros::Subscriber sub_T_wt_;
-  
-  //robot command publisher
-  ros::Publisher pub_right_wheel;
-  ros::Publisher pub_left_wheel;
-  
-  //robot estimated and target publisher 
-  ros::Publisher pub_estimated_;
-  ros::Publisher pub_target_;
 private:
   //Callback functions for robot configuration 
   void robot_dia_callback(const std_msgs::Float32& msg);
@@ -113,6 +128,7 @@ private:
   //Callback functions for laser scan, convert LaserScan message to 2D coordinate 
   void laser_scan_callback(const sensor_msgs::LaserScan& msg);
   
+  
   //Callback functions for robot state
   void T_wr_callback(const geometry_msgs::Pose2D& msg);
   void T_we_callback(const geometry_msgs::Pose2D& msg);
@@ -120,7 +136,7 @@ private:
   //convertion between Pose2D and SE2 
   inline SE2 convertPose2DToSE2(const geometry_msgs::Pose2D& msg);
   inline geometry_msgs::Pose2D convertSE2ToPose2D(const SE2& se2);
-  
+ 
 };
 SE2 RobotInterface::convertPose2DToSE2(const geometry_msgs::Pose2D& msg)
 {
