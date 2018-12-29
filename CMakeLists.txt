@@ -1,9 +1,9 @@
 #Build Settings
 cmake_minimum_required(VERSION 3.0)
-PROJECT( EKF_SLAM ) 
+PROJECT( ekf_slam ) 
 set( CMAKE_CXX_STANDARD 11 ) 
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-set(LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+#set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+#set(LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
 #Third Party Dependencies 
 ##Eigen 
@@ -20,10 +20,16 @@ add_definitions(${PCL_DEFINITIONS})
 ##ROS
 ###Find catkin and catkin backages 
 find_package(catkin REQUIRED roscpp std_msgs sensor_msgs geometry_msgs)
+
+set( THIRD_PARTY_LIBS 
+     ${Sophus_LIBRARIES}
+     ${catkin_LIBRARIES}
+     ${PCL_LIBRARIES}
+     )
 ###declare ROS messages and services 
 #NONE 
 ###Generate added messages and services 
-generate_messages(DEPENDENCIES std_msgs)
+#generate_messages(DEPENDENCIES std_msgs)
 
 ##Declare a catkin package 
 catkin_package() #is it necessary?

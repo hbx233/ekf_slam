@@ -1,1 +1,2 @@
-
+add_executable(run_ekf_slam test_robot_interface.cpp)
+target_link_libraries(run_ekf_slam ekf_slam)

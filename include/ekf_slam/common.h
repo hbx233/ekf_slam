@@ -9,10 +9,12 @@
 #include <memory>
 #include <iostream>
 #include <string>
+#include <algorithm>
 using std::vector;
 using std::string;
 using std::pair;
 using std::shared_ptr;
+using std::unique_ptr;
 using std::cout;
 using std::endl;
 //Third Party dependices 
@@ -31,3 +33,4 @@ using pcl::PointXY;
 using pcl::PointCloud;
 
 #define ERROR_MSG(msg) cout<<msg<<endl
+#endif

@@ -1,0 +1,37 @@
+robot: 
+  diameter: 0.3
+  wheel_diameter: 0.1
+  wheel_distance: 0.25
+vrep:
+  laser:
+    name: /vrep/front_scan
+    queue: 10
+  tf:
+    laser: 
+      name: /vrep/tf/laser
+      queue: 10
+    robot:
+      name: /vrep/tf/robot_ref
+      queue: 10
+  estimated_pose:
+    name: /vrep/estimated_pose
+    queue: 10
+  target_pose:
+    name: /vrep/target_pose
+    queue: 10
+  visibility:
+    estimated:
+      name: /vrep/visibility/estimated
+      queue: 10
+    target:
+      name: /vrep/visibility/target
+      queue: 10
+cmd_vel:
+  left:
+    name: /cmd_vel/left
+    queue: 10
+  right:
+    name: /cmd_vel/right
+    queue: 10
+    
+

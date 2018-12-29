@@ -1,6 +1,5 @@
-<?xml version="1.0"?>
-<package>
-    <name>EKF_SLAM</name>
+<package format="2">
+    <name>ekf_slam</name>
     <version>1.0.0</version>
     <description>The EKF SLAM Implementation with Vrep Simulation</description>
     <maintainer email="yhuan150@jhu.edu">Yuxuan Huang</maintainer>
