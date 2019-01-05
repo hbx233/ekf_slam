@@ -50,18 +50,18 @@ public:
   /**
    *  Getters of robot state(2D pose)
    */
-  SE2 checkAndReturnPose(const SE2& pose) const;
-  void checkAndPublishPose(const SE2& pose, SE2& cache, const ros::Publisher& pub);
+  Vector3d checkAndReturnPose(const Vector3d& pose) const;
+  void checkAndPublishPose(const Vector3d& pose, Vector3d& cache, const ros::Publisher& pub);
   //Transformation of Laser sensor frame in Robot reference frame
-  SE2 laserPoseInRobotFrame() const;
+  Vector3d laserPoseInRobotFrame() const;
   //Robot's absolute pose in world frame
-  SE2 robotPose() const;
+  Vector3d robotPose() const;
   //Robot's estimated pose in world frame
-  SE2 estimatedPose() const;
-  void setEstimatedPose(const SE2& estimated_pose);
+  Vector3d estimatedPose() const;
+  void setEstimatedPose(const Vector3d& estimated_pose);
   //Robot's target pose in world frame
-  SE2 targetPose() const;
-  void setTargetPose(const SE2& target_pose);
+  Vector3d targetPose() const;
+  void setTargetPose(const Vector3d& target_pose);
   
   //get and set visibility 
   bool estimatedPoseVisibility() const;
@@ -99,20 +99,20 @@ private:
   LaserFrame::Ptr laser_frame_ptr_;
   ros::Subscriber sub_laser_scan;
   
-  SE2 T_robot_laser_;
+  Vector3d T_robot_laser_;
   ros::Subscriber sub_T_robot_laser_;
   
   //robot frame in world reference frame, ground truth  
-  SE2 T_world_robot_;
+  Vector3d T_world_robot_;
   ros::Subscriber sub_T_world_robot_;
   
   //estimated robot frame in world reference frame 
-  SE2 T_world_estimated_;
+  Vector3d T_world_estimated_;
   //ros::Subscriber sub_T_world_estimated_;
   ros::Publisher pub_T_world_estimated_;
   
   //target frame in world reference frame 
-  SE2 T_world_target_;
+  Vector3d T_world_target_;
   //ros::Subscriber sub_T_world_target_;
   ros::Publisher pub_T_world_target_;
   
@@ -132,7 +132,7 @@ private:
 private:
   //Callback functions for laser scan, convert LaserScan message to 2D coordinate 
   void laser_scan_callback(const sensor_msgs::LaserScan& msg);
-  
+  void write_scan_to_file();
   
   //Callback functions for robot state
   void T_rl_callback(const geometry_msgs::Pose2D& msg);
@@ -140,20 +140,20 @@ private:
   //void T_we_callback(const geometry_msgs::Pose2D& msg);
   //void T_wt_callback(const geometry_msgs::Pose2D& msg);
   //convertion between Pose2D and SE2 
-  inline SE2 convertPose2DToSE2(const geometry_msgs::Pose2D& msg);
-  inline geometry_msgs::Pose2D convertSE2ToPose2D(const SE2& se2);
+  inline Vector3d convertPose2DToVector(const geometry_msgs::Pose2D& msg);
+  inline geometry_msgs::Pose2D convertVectorToPose2D(const Vector3d& s);
 };
-SE2 RobotInterface::convertPose2DToSE2(const geometry_msgs::Pose2D& msg)
+Vector3d RobotInterface::convertPose2DToVector(const geometry_msgs::Pose2D& msg)
 {
-  return SE2(msg.theta,Vector2d(msg.x,msg.y));
+  return Vector3d(msg.x,msg.y,msg.theta);
 }
 
-geometry_msgs::Pose2D RobotInterface::convertSE2ToPose2D(const SE2& se2)
+geometry_msgs::Pose2D RobotInterface::convertVectorToPose2D(const Vector3d& s)
 {
   geometry_msgs::Pose2D pose2D;
-  pose2D.x = se2.translation()[0];
-  pose2D.y = se2.translation()[1];
-  pose2D.theta = se2.so2().log();
+  pose2D.x = s(0);
+  pose2D.y = s(1);
+  pose2D.theta = s(2);
 }
 
 }

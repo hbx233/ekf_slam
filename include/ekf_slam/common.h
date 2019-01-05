@@ -10,6 +10,7 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <fstream>
 using std::vector;
 using std::string;
 using std::pair;
@@ -20,17 +21,23 @@ using std::endl;
 //Third Party dependices 
 //Eigen 
 #include <Eigen/Core>
+#include <Eigen/Dense>
 using Eigen::Vector2d;
+using Eigen::Vector3d;
+using Eigen::Matrix2d;
+using Eigen::Matrix3d;
+using Matrix32d = Eigen::Matrix<double,3,2>;
+using Matrix23d = Eigen::Matrix<double,2,3>;
 //Sophus
 #include <sophus/so2.h>
 #include <sophus/se2.h>
 using Sophus::SO2;
 using Sophus::SE2;
-//PCL
-#include <pcl/point_types.h>
-#include <pcl/io/pcd_io.h>
-using pcl::PointXY;
-using pcl::PointCloud;
+//OpenCV, just to visualize the extracted line 
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
 
+#define PI 3.14159265
 #define ERROR_MSG(msg) cout<<msg<<endl
 #endif

@@ -1,2 +1,6 @@
 add_executable(run_ekf_slam test_robot_interface.cpp)
 target_link_libraries(run_ekf_slam ekf_slam)
+add_executable(test_line_extraction test_line_extraction.cpp)
+target_link_libraries(test_line_extraction ekf_slam)
+add_executable(test_ekf test_ekf.cpp)
+target_link_libraries(test_ekf ekf_slam)

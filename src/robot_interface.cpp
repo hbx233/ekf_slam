@@ -52,7 +52,6 @@ RobotInterface::RobotInterface(const ros::NodeHandle& nh)
   //velocity command 
   pub_left_wheel_vel_ = nh_.advertise<std_msgs::Float32>(topic_name_[l_vel],queue_size_[l_vel]);
   pub_right_wheel_vel_ = nh_.advertise<std_msgs::Float32>(topic_name_[r_vel],queue_size_[r_vel]);
-  cout<<
   //Transfer to Initialized state
   state_ = State::Initialized;
 }
@@ -87,48 +86,48 @@ double RobotInterface::robotwheelDiameter() const
   }
 }
 //robot state
-SE2 RobotInterface::checkAndReturnPose(const SE2& pose) const
+Vector3d RobotInterface::checkAndReturnPose(const Vector3d& pose) const
 {
   if(state_ == State::Running){
     return pose;
   } else{
     ERROR_MSG("Robot Is Not Running");
-    return SE2();
+    return Vector3d();
   }
 }
-void RobotInterface::checkAndPublishPose(const SE2& pose, SE2& cache, const ros::Publisher& pub)
+void RobotInterface::checkAndPublishPose(const Vector3d& pose, Vector3d& cache, const ros::Publisher& pub)
 {
   if(state_ == State::Running){
     cache = pose;
-    pub.publish(convertSE2ToPose2D(cache));
+    pub.publish(convertVectorToPose2D(cache));
   } else{
     ERROR_MSG("Robot Is Not Running");
   }
 }
 
-SE2 RobotInterface::laserPoseInRobotFrame() const
+Vector3d RobotInterface::laserPoseInRobotFrame() const
 {
   return checkAndReturnPose(T_robot_laser_);
 }
-SE2 RobotInterface::robotPose() const
+Vector3d RobotInterface::robotPose() const
 {
   return checkAndReturnPose(T_world_robot_);
 }
 
-SE2 RobotInterface::estimatedPose() const
+Vector3d RobotInterface::estimatedPose() const
 {
   return checkAndReturnPose(T_world_estimated_);
 }
-void RobotInterface::setEstimatedPose(const SE2& estimated_pose)
+void RobotInterface::setEstimatedPose(const Vector3d& estimated_pose)
 {
   checkAndPublishPose(estimated_pose, T_world_estimated_, pub_T_world_estimated_);
 }
 
-SE2 RobotInterface::targetPose() const
+Vector3d RobotInterface::targetPose() const
 {
   return checkAndReturnPose(T_world_target_);
 }
-void RobotInterface::setTargetPose(const SE2& target_pose)
+void RobotInterface::setTargetPose(const Vector3d& target_pose)
 {
   checkAndPublishPose(target_pose, T_world_target_, pub_T_world_target_);
 }
@@ -208,13 +207,13 @@ void RobotInterface::setRobotVelocity(double v, double w)
 //Callback functions 
 void RobotInterface::T_rl_callback(const geometry_msgs::Pose2D& msg)
 {
-  T_robot_laser_ = convertPose2DToSE2(msg);
+  T_robot_laser_ = convertPose2DToVector(msg);
 }
 
 // Robot State Callback functions 
 void RobotInterface::T_wr_callback(const geometry_msgs::Pose2D& msg)
 {
-  T_world_robot_ = convertPose2DToSE2(msg);
+  T_world_robot_ = convertPose2DToVector(msg);
 }
 
 // Laser Scan Callback function 
@@ -233,6 +232,7 @@ void RobotInterface::laser_scan_callback(const sensor_msgs::LaserScan& msg)
   }
   state_ = State::Running;
 }
+
 }
 
 

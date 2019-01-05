@@ -13,10 +13,11 @@ int main(int argc, char **argv){
       cout<<"Initialized"<<endl;
     } else if(robotPtr->state_ == ekf_slam::RobotInterface::State::Running){
       cout<<"Running"<<endl;
+      shared_ptr<ekf_slam::LaserFrame> laserPtr = robotPtr->getLaserFrame();
     } else{
       cout<<"Lost"<<endl;
     }
-    robotPtr->setRobotVelocity(0,30);
+    //robotPtr->setRobotVelocity(0,30);
     ros::spinOnce();
     loopRate.sleep();
   }
