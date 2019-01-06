@@ -18,6 +18,9 @@ using std::shared_ptr;
 using std::unique_ptr;
 using std::cout;
 using std::endl;
+using std::ifstream;
+using std::ofstream;
+using std::istringstream;
 //Third Party dependices 
 //Eigen 
 #include <Eigen/Core>
@@ -28,6 +31,8 @@ using Eigen::Matrix2d;
 using Eigen::Matrix3d;
 using Matrix32d = Eigen::Matrix<double,3,2>;
 using Matrix23d = Eigen::Matrix<double,2,3>;
+using Eigen::MatrixXd;
+using Eigen::VectorXd;
 //Sophus
 #include <sophus/so2.h>
 #include <sophus/se2.h>

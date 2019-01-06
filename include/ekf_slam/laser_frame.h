@@ -14,6 +14,7 @@ public:
   vector<LineSegment> line_segments_; //line segment features in laser frame 
 public:
   LaserFrame(const unsigned long& id, const double& time_stamp=0, const vector<Vector2d>& laser_points=vector<Vector2d>(), const Vector3d& T_w_l = Vector3d());
+  void writeLaserPointsToFile(string filename);
 };
 }
 #endif

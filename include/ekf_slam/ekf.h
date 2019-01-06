@@ -17,15 +17,24 @@ public:
  * State Transition Part
  */
 public:
+  //construct the state vector using robot state and map
+  //take seperate robot state and map to construct state vector, better for future build map function
+  //seperate the internal vectorized filter function with the outter implementation 
+  void constructStateVector(const Vector3d& T_prev, const vector<LineSegment>& map_prev, const MatrixXd& P_prev);
+public:
+  //previous state vector need to be constructed from robot state and map 
+  VectorXd x_prev;
+  //initialize all vector and matrix
+  void initVectorAndMatrix(const int& map_size);
   //do state transition to compute the prior estimation of 
   //control input u[0]: left wheel, u[1]: right wheel
-  void stateTransition(const Vector3d& x_prev, const Matrix3d P_prev, const Vector2d& u);
-private:
-  //prior estimation of state
-  Vector3d x_prior;
-  Matrix3d P_prior;
-  Matrix3d F_x; 
-  Matrix32d F_u;
+  void stateTransition(const MatrixXd& P_prev, const Vector2d& u);
+public:
+  //prior estimation of the state
+  VectorXd x_prior;
+  MatrixXd P_prior;
+  MatrixXd F_x; 
+  MatrixXd F_u;
   //control input noise covariance parameter 
   double k_;
   //inter-wheel distance 
@@ -36,15 +45,15 @@ private:
 public: 
   //predict the measurements given landmarks and prior state
   //number of predicted measurements equals to number of landmarks provided 
-  void predictMeasurementsFromPriorState(const vector<LineSegment>& landmarks);
+  void predictMeasurementsFromPriorState(const vector<LineSegment>& map_prev);
   //associate the observation with predicted measurements
   //gate the distance between each observation and prediction
   //if one observation's distance with all prediction fall outside the gate,
   //this observed measurement is considered as false measurement and will be abandoned 
   void associateObservationWithPrediction(const vector<LineSegment>& z, const vector<Matrix2d>& R);
-private:
+public:
   vector<LineSegment> z_predict;
-  vector<Matrix23d> H;
+  vector<MatrixXd> H;
   vector<pair<int,int>> matches;
   //association gate value 
   double g_;
@@ -52,15 +61,21 @@ private:
  *Posterior Estimation
  */
 public:
-  void compPosteriorEstimation(const vector<LineSegment>& z, const vector<Matrix2d>& R, Vector3d& x, Matrix3d& P);
+  //compute posterior estimation of state and covariance matrix 
+  void compPosteriorEstimation(const vector<LineSegment>& z, const vector<Matrix2d>& R);
+public:
+  VectorXd x_posterior;
+  MatrixXd P_posterior;
 /**
  * EKF
  */
 public:
-  void ekfOneStep(const Vector3d& x_prev, const Matrix3d& P_prev,const Vector2d& u, const vector<LineSegment>& z, const vector<Matrix2d>& R, const vector<LineSegment>& landmarks, Vector3d& x_posterior, Matrix3d& P_posterior);
+  //interface function 
+  void ekfOneStep
+    (const Vector3d& T_prev,const Vector2d& u, const vector<LineSegment>& z, const vector<Matrix2d>& R, const vector<LineSegment>& map_prev, const MatrixXd& P_prev, Vector3d& T_posterior, vector<LineSegment>& map_posterior, MatrixXd& P_posterior);
 private: 
   long ekf_step_;//record how many steps have been processed in EkfFilter
-
+  
 };
 }
 #endif
