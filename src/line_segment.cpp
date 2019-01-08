@@ -1,27 +1,39 @@
 #include "ekf_slam/line_segment.h"
 namespace ekf_slam {
-void LineSegment::convertToFrameT(const double& x, const double& y, const double& theta, LineSegment& ls_in_T, bool& isNegative) const
+void LineSegment::convertToFrameT(const Vector3d& T)
 {
-  ls_in_T.alpha_ = alpha_ - theta;
-  ls_in_T.r_ = r_ - x * cos(alpha_) - y * sin(alpha_);
-  if(ls_in_T.r_<0){
-    ls_in_T.r_ = -ls_in_T.r_;
-    ls_in_T.alpha_  += PI;
-    isNegative = true;
-  } else{
-    isNegative = false;
-  }
-  if(ls_in_T.alpha_>PI){
-    ls_in_T.alpha_ -= 2*PI;
-  }
-  if(ls_in_T.alpha_<-PI){
-    ls_in_T.alpha_ += 2*PI;
-  }
+  bool isNegative;
+  Vector2d line = vectorInFrameT(T,isNegative);
+  alpha_ = line(0);
+  r_ = line(0);
 }
 Vector2d LineSegment::vector() const
 {
   return Vector2d(alpha_,r_);
 }
 
+Vector2d LineSegment::vectorInFrameT(const Vector3d& T, bool& isNegative) const
+{
+  cout<<"*"<<endl;
+  Vector2d line;
+  line(0) = alpha_ - T(2);
+  line(1) = r_ - T(0)*cos(alpha_) - T(1)*sin(alpha_);
+  cout<<"**"<<endl;
+  if(line(1)<0){
+    line(1) = -line(1);
+    line(0) = line(0) + PI;
+    isNegative = true;
+  } else{
+    isNegative = false;
+  }
+  cout<<"***"<<endl;
+  if(line(0)>PI){
+    line(0) = line(0) - 2*PI;
+  } 
+  if(line(0)<-PI){
+    line(0) = line(0) + 2*PI;
+  }
+  return line;
+}
 
 }

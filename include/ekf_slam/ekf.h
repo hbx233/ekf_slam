@@ -25,7 +25,7 @@ public:
   //previous state vector need to be constructed from robot state and map 
   VectorXd x_prev;
   //initialize all vector and matrix
-  void initVectorAndMatrix(const int& map_size);
+  void initVectorAndMatrix();
   //do state transition to compute the prior estimation of 
   //control input u[0]: left wheel, u[1]: right wheel
   void stateTransition(const MatrixXd& P_prev, const Vector2d& u);
@@ -52,9 +52,10 @@ public:
   //this observed measurement is considered as false measurement and will be abandoned 
   void associateObservationWithPrediction(const vector<LineSegment>& z, const vector<Matrix2d>& R);
 public:
-  vector<LineSegment> z_predict;
+  vector<Vector2d> z_predict;
   vector<MatrixXd> H;
   vector<pair<int,int>> matches;
+  vector<int> unmatched_idx;
   //association gate value 
   double g_;
 /**
@@ -62,10 +63,9 @@ public:
  */
 public:
   //compute posterior estimation of state and covariance matrix 
-  void compPosteriorEstimation(const vector<LineSegment>& z, const vector<Matrix2d>& R);
+  void compPosteriorEstimation(const vector<LineSegment>& z, const vector<Matrix2d>& R, MatrixXd& P_posterior);
 public:
   VectorXd x_posterior;
-  MatrixXd P_posterior;
 /**
  * EKF
  */

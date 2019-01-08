@@ -6,6 +6,7 @@ namespace ekf_slam {
 RobotInterface::RobotInterface(const ros::NodeHandle& nh) 
   : nh_(nh)
 {
+  cout<<"Initiating all parameters"<<endl;
   // initialize the parameter server
   // robot configuration, get robot configuration from parameter server 
   nh_.getParam("robot/diameter", robot_diameter_);
@@ -29,29 +30,38 @@ RobotInterface::RobotInterface(const ros::NodeHandle& nh)
   nh_.getParam("vrep/visibility/estimated/queue", queue_size_[estimated_vis]);
   nh_.getParam("vrep/visibility/target/name", topic_name_[target_vis]);
   nh_.getParam("vrep/visibility/target/queue", queue_size_[target_vis]);
-  // wheel velocity 
+  // left and right wheel velocity 
   nh_.getParam("cmd_vel/left/name",topic_name_[l_vel]);
   nh_.getParam("cmd_vel/left/queue",queue_size_[l_vel]);
   nh_.getParam("cmd_vel/right/name",topic_name_[r_vel]);
   nh_.getParam("cmd_vel/right/queue",queue_size_[r_vel]);
+  // wheel state subscriber 
+  nh_.getParam("vrep/wheel_state/name", topic_name_[wheel_state]);
+  nh_.getParam("vrep/wheel_state/queue", queue_size_[wheel_state]);
   
   //Connect subscriber 
+  cout<<"Connect all subscribers"<<endl;
   //laser scan
   sub_laser_scan = nh_.subscribe(topic_name_[laser_scan],queue_size_[laser_scan],&RobotInterface::laser_scan_callback,this);
   //ground truth transformation 
   sub_T_robot_laser_ = nh_.subscribe(topic_name_[T_r_l],queue_size_[T_r_l],&RobotInterface::T_rl_callback,this);
   sub_T_world_robot_ = nh_.subscribe(topic_name_[T_w_r],queue_size_[T_w_r],&RobotInterface::T_wr_callback,this);
+  //wheel state subscriber 
+  sub_wheel_state_ = nh_.subscribe(topic_name_[wheel_state],queue_size_[wheel_state], &RobotInterface::wheel_state_callback,this);
+  
   
   //Connect Publisher 
+  cout<<"Connect all publishers"<<endl;
   //estimated and target pose 
-  pub_T_world_estimated_ = nh_.advertise<geometry_msgs::Pose2D>(topic_name_[T_w_e],queue_size_[T_w_e]);
-  pub_T_world_target_ = nh_.advertise<geometry_msgs::Pose2D>(topic_name_[T_w_t],queue_size_[T_w_t]);
+  pub_T_world_estimated_ = nh_.advertise<geometry_msgs::Pose2D>(topic_name_[T_w_e],queue_size_[T_w_e],true);
+  pub_T_world_target_ = nh_.advertise<geometry_msgs::Pose2D>(topic_name_[T_w_t],queue_size_[T_w_t],true);
   //estimated and target pose visibility 
   pub_estimated_pose_visibility_ = nh_.advertise<std_msgs::Bool>(topic_name_[estimated_vis],queue_size_[estimated_vis],true);
   pub_target_pose_visibility_ = nh_.advertise<std_msgs::Bool>(topic_name_[target_vis],queue_size_[target_vis],true);
   //velocity command 
-  pub_left_wheel_vel_ = nh_.advertise<std_msgs::Float32>(topic_name_[l_vel],queue_size_[l_vel]);
-  pub_right_wheel_vel_ = nh_.advertise<std_msgs::Float32>(topic_name_[r_vel],queue_size_[r_vel]);
+  pub_left_wheel_vel_ = nh_.advertise<std_msgs::Float32>(topic_name_[l_vel],queue_size_[l_vel],true);
+  pub_right_wheel_vel_ = nh_.advertise<std_msgs::Float32>(topic_name_[r_vel],queue_size_[r_vel],true);
+  
   //Transfer to Initialized state
   state_ = State::Initialized;
 }
@@ -67,7 +77,7 @@ double RobotInterface::robotDiameter() const
   }
 }
 
-double RobotInterface::robotwheelDistance() const
+double RobotInterface::robotWheelDistance() const
 {
   if(state_ != State::Lost){
     return robot_wheel_distance_;
@@ -76,7 +86,7 @@ double RobotInterface::robotwheelDistance() const
     return 0;
   } 
 }
-double RobotInterface::robotwheelDiameter() const
+double RobotInterface::robotWheelDiameter() const
 {
   if(state_ != State::Lost){
     return robot_wheel_diameter_;
@@ -118,6 +128,7 @@ Vector3d RobotInterface::estimatedPose() const
 {
   return checkAndReturnPose(T_world_estimated_);
 }
+
 void RobotInterface::setEstimatedPose(const Vector3d& estimated_pose)
 {
   checkAndPublishPose(estimated_pose, T_world_estimated_, pub_T_world_estimated_);
@@ -192,29 +203,76 @@ void RobotInterface::setRobotVelocity(double v, double w)
 {
   if(state_ == State::Running){
     //compute wheel velocity given the robot velocity 
-    left_wheel_vel_ = (v+(robot_wheel_distance_/2)*w)/(robot_wheel_diameter_/2); 
-    right_wheel_vel_= (v-(robot_wheel_distance_/2)*w)/(robot_wheel_diameter_/2);
+    double l_vel_ = (v+(robot_wheel_distance_/2)*w)/(robot_wheel_diameter_/2); 
+    double r_vel_= (v-(robot_wheel_distance_/2)*w)/(robot_wheel_diameter_/2);
     std_msgs::Float32 l_vel_msg;
     std_msgs::Float32 r_vel_msg;
-    l_vel_msg.data = left_wheel_vel_;
-    r_vel_msg.data = right_wheel_vel_;
+    l_vel_msg.data = l_vel_;
+    r_vel_msg.data = r_vel_;
     pub_left_wheel_vel_.publish(l_vel_msg);
     pub_right_wheel_vel_.publish(r_vel_msg);
   } else{
     ERROR_MSG("Robot Is Not Running");
   }
 }
+
+Vector2d RobotInterface::getWheelVel()
+{
+  if(state_ == State::Running){
+    return wheel_velocity_;
+  } else{
+    ERROR_MSG("Robot Is Not Running");
+  }
+}
+
+Vector2d RobotInterface::getWheelJointValue()
+{
+  if(state_ == State::Running){
+    return wheel_joint_value_;
+  } else{
+    ERROR_MSG("Robot Is Not Running");
+  }
+}
+
+double RobotInterface::getElapsedTimeFromLastCall()
+{
+  static bool first_call=true;
+  static high_resolution_clock::time_point curr_t;
+  if(first_call){
+    cout<<"[TIME] The first call to timing function"<<endl;
+    curr_t = high_resolution_clock::now();
+    first_call = false;
+    return -1;
+  } else{
+    auto t_ = high_resolution_clock::now();
+    auto elapsed_ = t_ - curr_t;
+    curr_t = t_;
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_).count();
+    return static_cast<double>(ms)/1000;
+  }
+}
+
+
 //Callback functions 
 void RobotInterface::T_rl_callback(const geometry_msgs::Pose2D& msg)
 {
   T_robot_laser_ = convertPose2DToVector(msg);
 }
 
-// Robot State Callback functions 
+// Robot Ground Truth State Callback functions 
 void RobotInterface::T_wr_callback(const geometry_msgs::Pose2D& msg)
 {
   T_world_robot_ = convertPose2DToVector(msg);
 }
+
+void RobotInterface::wheel_state_callback(const sensor_msgs::JointState& msg)
+{
+  wheel_velocity_(0) = msg.velocity[0];//left wheel velocity 
+  wheel_velocity_(1) = msg.velocity[1];//right wheel velocity 
+  wheel_joint_value_(0) = msg.position[0];//left wheel joint value 
+  wheel_joint_value_(1) = msg.position[1];//right wheel joint value
+}
+
 
 // Laser Scan Callback function 
 void RobotInterface::laser_scan_callback(const sensor_msgs::LaserScan& msg)

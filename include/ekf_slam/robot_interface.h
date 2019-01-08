@@ -11,6 +11,7 @@
 #include "std_msgs/Float32.h"
 #include "std_msgs/Bool.h"
 #include "sensor_msgs/LaserScan.h"
+#include "sensor_msgs/JointState.h"
 #include "geometry_msgs/Pose2D.h"
 namespace ekf_slam{
 
@@ -43,9 +44,9 @@ public:
   //Circular robot diameter 
   double robotDiameter() const;
   //Two wheels' diameter
-  double robotwheelDiameter() const;
+  double robotWheelDiameter() const;
   //Distance between two wheels
-  double robotwheelDistance() const;
+  double robotWheelDistance() const;
   
   /**
    *  Getters of robot state(2D pose)
@@ -79,7 +80,14 @@ public:
    */
   
   void setRobotVelocity(double v, double w);
-  
+  Vector2d getWheelVel();
+  Vector2d getWheelJointValue();
+  /**
+   * Programe timing interface
+   * stand alone timing function, don't use the time stamp in laser frame
+   */
+  double getElapsedTimeFromLastCall();
+
 private:
   //ros NodeHandle
   ros::NodeHandle nh_;
@@ -91,14 +99,15 @@ private:
   
   float robot_wheel_distance_{0};
   
-  enum SubsAndPubs{laser_scan,T_r_l,T_w_r,T_w_e,T_w_t,estimated_vis,target_vis,l_vel,r_vel};
+  enum SubsAndPubs{laser_scan,T_r_l,T_w_r,T_w_e,T_w_t,estimated_vis,target_vis,l_vel,r_vel,wheel_state};
   //laser frame in robot reference frame 
-  string topic_name_[9];
-  int queue_size_[9]={10,10,10,10,10,10,10,10,10};
+  string topic_name_[10];
+  int queue_size_[10]={10,10,10,10,10,10,10,10,10,10};
   
   LaserFrame::Ptr laser_frame_ptr_;
   ros::Subscriber sub_laser_scan;
   
+  //relative pose of laser frame in robot reference frame 
   Vector3d T_robot_laser_;
   ros::Subscriber sub_T_robot_laser_;
   
@@ -123,11 +132,17 @@ private:
   bool target_pose_visibility_{false};
   ros::Publisher pub_target_pose_visibility_;
   
-  double left_wheel_vel_{0};
+  //subscriber and publisher of control velocity 
+  //publisher only publish the velocity to topic, but does not change the internal cache
+  //subscriber will change the internal cache, it record the true velocity 
+  //ATTENTION: 
+  //DO NOT use joint velocity multiply elapsed time to get input, the clock frequency in simulator is
+  //different from ROS node, need to use the current joint value minus the past joint value 
+  Vector2d wheel_velocity_; //[left,right]
+  Vector2d wheel_joint_value_;//[left,right]
   ros::Publisher pub_left_wheel_vel_;
-  
-  double right_wheel_vel_{0};
   ros::Publisher pub_right_wheel_vel_;
+  ros::Subscriber sub_wheel_state_;
 
 private:
   //Callback functions for laser scan, convert LaserScan message to 2D coordinate 
@@ -139,6 +154,7 @@ private:
   void T_wr_callback(const geometry_msgs::Pose2D& msg);
   //void T_we_callback(const geometry_msgs::Pose2D& msg);
   //void T_wt_callback(const geometry_msgs::Pose2D& msg);
+  void wheel_state_callback(const sensor_msgs::JointState& msg); 
   //convertion between Pose2D and SE2 
   inline Vector3d convertPose2DToVector(const geometry_msgs::Pose2D& msg);
   inline geometry_msgs::Pose2D convertVectorToPose2D(const Vector3d& s);
@@ -154,6 +170,7 @@ geometry_msgs::Pose2D RobotInterface::convertVectorToPose2D(const Vector3d& s)
   pose2D.x = s(0);
   pose2D.y = s(1);
   pose2D.theta = s(2);
+  return pose2D;
 }
 
 }

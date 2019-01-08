@@ -58,7 +58,7 @@ int main(){
   cout<<"P_prior"<<endl;
   cout<<ekf.P_prior<<endl;
   for(auto& l:ekf.z_predict){
-    cout<<l.alpha_<<' '<<l.r_<<endl;
+    cout<<l[0]<<' '<<l[1]<<endl;
   }
   for(auto& h:ekf.H){
     cout<<h<<endl;

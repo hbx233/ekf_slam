@@ -11,6 +11,7 @@
 #include <string>
 #include <algorithm>
 #include <fstream>
+#include <chrono>
 using std::vector;
 using std::string;
 using std::pair;
@@ -21,6 +22,7 @@ using std::endl;
 using std::ifstream;
 using std::ofstream;
 using std::istringstream;
+using std::chrono::high_resolution_clock;
 //Third Party dependices 
 //Eigen 
 #include <Eigen/Core>

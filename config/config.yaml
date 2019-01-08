@@ -26,6 +26,9 @@ vrep:
     target:
       name: /vrep/visibility/target
       queue: 10
+  wheel_state:
+    name: /vrep/wheel_joint_state
+    queue: 10
 cmd_vel:
   left:
     name: /cmd_vel/left

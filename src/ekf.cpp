@@ -5,6 +5,7 @@ EKFilter::EKFilter(double k, double b, double g)
 
 void EKFilter::constructStateVector(const Vector3d& T_prev, const vector<LineSegment>& map_prev, const MatrixXd& P_prev)
 {
+  cout<<"constructing state vector"<<endl;
   //first CHECK if the provided covariance matrix's size same with state plus map
   int n = map_prev.size();
   if(P_prev.rows() != P_prev.cols() || P_prev.rows() != (3+2*n)){
@@ -22,9 +23,11 @@ void EKFilter::constructStateVector(const Vector3d& T_prev, const vector<LineSeg
   }
 }
 
-void EKFilter::initVectorAndMatrix(const int& map_size)
+void EKFilter::initVectorAndMatrix()
 {
-  int n = 3 + 2*map_size;
+  cout<<"initiating internal vector and matrix"<<endl;
+  int n = x_prev.size();
+  int map_size = (n-3)/2;
   // initiate all the internal vector and matrix
   x_prior = VectorXd(n);
   P_prior = MatrixXd(n,n);
@@ -33,13 +36,16 @@ void EKFilter::initVectorAndMatrix(const int& map_size)
   // initiate measurement prediction
   z_predict.clear();
   H.clear();
-  z_predict = vector<LineSegment>(map_size);
+  matches.clear();
+  unmatched_idx.clear();
+  z_predict = vector<Vector2d>(map_size);
   H = vector<MatrixXd>(map_size,MatrixXd::Zero(2,n));
 }
 
 
 void EKFilter::stateTransition(const MatrixXd& P_prev, const Vector2d& u)
 {
+  cout<<"State Transition"<<endl;
   //only do state transition for robot state, map's state won't change
   x_prior(0) = x_prev(0) + (u(0)+u(1))/2 * cos(x_prev(2) +(u(1)-u(0))/(2*b_));
   x_prior(1) = x_prev(1) + (u(0)+u(1))/2 * sin(x_prev(2) +(u(1)-u(0))/(2*b_));
@@ -68,18 +74,25 @@ void EKFilter::stateTransition(const MatrixXd& P_prev, const Vector2d& u)
   
   //Control input noise covariance matrix 
   Matrix2d Q = Matrix2d::Zero();
-  Q(0,0) = 0.0004; //k_ * std::abs(u(0));
-  Q(1,1) = 0.0004; //k_ * std::abs(u(1));
+  Q(0,0) = 0.0004;//k_ * std::abs(u(0));
+  Q(1,1) = 0.0004;//k_ * std::abs(u(1));
   //compute covariance matrix for prior estimation
   P_prior = F_x * P_prev * F_x.transpose() + F_u * Q * F_u.transpose();
 }
 void EKFilter::predictMeasurementsFromPriorState(const vector<LineSegment>& map_prev)
 {
+  cout<<"Measurement Prediction"<<endl;
   bool isNegative;
   //compute H for every 
   for(int i = 0; i<map_prev.size(); i++){
+    cout<<i<<endl;
+    cout<<z_predict.size()<<endl;
+    cout<<map_prev.size()<<endl;
+    cout<<x_prior<<endl;
     //predict the measurement based on prior estimation of state: x_prior
-    map_prev[i].convertToFrameT(x_prior(0),x_prior(1),x_prior(2),z_predict[i],isNegative);
+    //map_prev[i].convertToFrameT(x_prior(0),x_prior(1),x_prior(2),z_predict[i],isNegative);
+    z_predict[i] = map_prev[i].vectorInFrameT(x_prior.head<3>(),isNegative);
+    cout<<"*"<<endl;
     //compute the jacobian of predicted measurement 
     H[i](0,2) = -1;
     if(isNegative){
@@ -105,36 +118,20 @@ void EKFilter::predictMeasurementsFromPriorState(const vector<LineSegment>& map_
 }
 void EKFilter::associateObservationWithPrediction(const vector<LineSegment>& z, const vector<Matrix2d>& R)
 {
+  cout<<"Measurement Association"<<endl;
   //initialize distance matrix 
   double d[z.size()][z_predict.size()]={0};
   //compute the distance between each observation and prediction 
   for(int i = 0; i<z.size(); i++){
     for(int j = 0; j<z_predict.size(); j++){
       //compute innovation z-z_hat_
-      Vector2d v(z[i].alpha_-z_predict[j].alpha_, z[i].r_-z_predict[j].r_);
+      //Vector2d v(z[i].alpha_-z_predict[j].alpha_, z[i].r_-z_predict[j].r_);
+      Vector2d v(z[i].vector()-z_predict[j]);
       //compute innovation covariance 
       Matrix2d cov = H[j] * P_prior * H[j].transpose() + R[i];
       //compute mahalanobis distance 
       d[i][j] = v.transpose() * cov.inverse() * v;
-      if(i==0 && j==0){
-	cout<<"first distance"<<endl;
-	cout<<v<<endl;
-	cout<<H[0]<<endl;
-	cout<<P_prior<<endl;
-	cout<<H[j] * P_prior * H[j].transpose()<<endl;
-	cout<<R[i]<<endl;
-	cout<<cov<<endl;
-	cout<<cov.inverse()<<endl;
-      }
     }
-  }
-  //output d for debug 
-  cout<<"[DEBUG] d value"<<endl;
-  for(int i=0; i<z.size();i++){
-    for( int j=0; j<z_predict.size(); j++){
-      cout<<d[i][j]<<' ';
-    }
-    cout<<endl;
   }
   //threshold and determine the association from distance 
   for(int i =0; i<z.size(); i++){
@@ -152,11 +149,14 @@ void EKFilter::associateObservationWithPrediction(const vector<LineSegment>& z, 
     if(smallest_index!=-1){
       //successfully matched  
       matches.push_back(pair<int,int>(i,smallest_index));
+    } else{
+      unmatched_idx.push_back(i);
     }
   }
 }
-void EKFilter::compPosteriorEstimation(const vector<LineSegment>& z, const vector<Matrix2d>& R)
+void EKFilter::compPosteriorEstimation(const vector<LineSegment>& z, const vector<Matrix2d>& R, MatrixXd& P_posterior)
 {
+  cout<<"Posterior Estimation"<<endl;
   //make H and R 
   int n = matches.size(); //number of valid association 
   Eigen::MatrixXd H_stacked(2*n,x_prior.size());
@@ -167,15 +167,9 @@ void EKFilter::compPosteriorEstimation(const vector<LineSegment>& z, const vecto
   for(int i = 0; i<matches.size(); i++){
     H_stacked.block(2*i,0,2,x_prior.size()) = H[matches[i].second];
     R_diag.block(2*i,2*i,2,2) = R[matches[i].first];
-    v_stacked.segment(2*i,2) = z[matches[i].first].vector() - z_predict[matches[i].second].vector();
+    v_stacked.segment(2*i,2) = z[matches[i].first].vector() - z_predict[matches[i].second];
   }
-  cout<<"H_stacked"<<endl;
-  cout<<H_stacked<<endl;
-  cout<<"R_diag"<<endl;
-  cout<<R_diag<<endl;
-  cout<<"v_stacked"<<endl;
-  cout<<v_stacked<<endl;
-  
+
   //compute Kalman gain 
   Eigen::MatrixXd cov(2*n,2*n);
   cov = H_stacked * P_prior * H_stacked.transpose() + R_diag;
@@ -186,8 +180,9 @@ void EKFilter::compPosteriorEstimation(const vector<LineSegment>& z, const vecto
 }
 void EKFilter::ekfOneStep(const Vector3d& T_prev,const Vector2d& u, const vector<LineSegment>& z, const vector<Matrix2d>& R, const vector<LineSegment>& map_prev, const MatrixXd& P_prev, Vector3d& T_posterior, vector<LineSegment>& map_posterior, MatrixXd& P_posterior)
 { 
+  cout<<"Running ekf, "<<ekf_step_<<"th step"<<endl;
   constructStateVector(T_prev,map_prev,P_prev);
-  initVectorAndMatrix(map_prev.size());
+  initVectorAndMatrix();
   //state transition, get prior estimation  
   stateTransition(P_prev,u);
   //measurement prediction 
@@ -195,7 +190,7 @@ void EKFilter::ekfOneStep(const Vector3d& T_prev,const Vector2d& u, const vector
   //associate measurement prediction with observed measurement 
   associateObservationWithPrediction(z,R);
   //extended kalman filter, get posterior estimation 
-  compPosteriorEstimation(z,R);
+  compPosteriorEstimation(z,R,P_posterior);
   //convert posterior estimation to T and map
   T_posterior = x_posterior.head<3>();  
   //first copy the previous map to map posterior estimation 
@@ -205,7 +200,6 @@ void EKFilter::ekfOneStep(const Vector3d& T_prev,const Vector2d& u, const vector
     map_posterior[i].alpha_ = x_posterior(3+2*i);
     map_posterior[i].r_ = x_posterior(3+2*i+1);
   }
-  P_posterior = this->P_posterior;
   //increase filter step 
   ekf_step_++;
 }
