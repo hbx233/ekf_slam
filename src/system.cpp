@@ -3,6 +3,13 @@ namespace ekf_slam {
 System::System(LineDetector::Ptr line_detector, EKFilter::Ptr ekfilter)
 :state_(State::INITIALIZING),line_detector_(line_detector),ekfilter_(ekfilter),frame_prev_(nullptr),map_(nullptr)
 {}
+Vector3d inverseT(const Vector3d& T){
+  Vector3d T_inv;
+  T_inv(0) = -T(0) * cos(T(2)) - T(1) * sin(T(2));
+  T_inv(1) =  T(0) * sin(T(2)) - T(1) * cos(T(2));
+  T_inv(2) = -T(2);
+  return T_inv;
+}
 void System::initSLAM(const Vector3d& T_init, LaserFrame::Ptr frame_init, const Matrix3d& P_T_init, const Vector2d& joint_value_init)
 {
   //set initial pose
@@ -17,17 +24,26 @@ void System::initSLAM(const Vector3d& T_init, LaserFrame::Ptr frame_init, const 
   Matrix2d P_ls_init = Matrix2d::Zero();
   P_ls_init(0,0) = 0.1;
   P_ls_init(1,1) = 0.1;
-  vector<Matrix2d> P_line_segments(line_segments.size(),P_ls_init);
-  // create a map and add all deteced line_segments to it 
-  map_ = std::make_shared<Map>(line_segments,P_line_segments);
+  vector<Matrix2d> P_init(line_segments.size(),P_ls_init);
+  // create a map and add all detected line_segments(First convert to world frame) to it 
+  //get inverse transformation of initial T
+  Vector3d T_l_w = inverseT(T_init);
+  for(int i=0; i<line_segments.size(); i++){
+    line_segments[i].convertToFrameT(T_l_w);
+  }
+  map_ = std::make_shared<Map>(line_segments,P_init);
   //build covariance matrix 
   int map_size = map_->size();
   int dim = 3+2*map_size;
   P_prev_ = MatrixXd::Zero(dim,dim);
   P_prev_.block(0,0,3,3) = P_T_init;
   P_prev_.block(3,3,2*map_size,2*map_size) = map_->getCovarianceMatrix();
+  //output initialization information 
+  cout<<"Initial map size: "<<map_->size()<<endl;
+  //chage System state
+  state_ = State::RUNNING;
 }
-void System::oneSLAMStep(LaserFrame::Ptr frame_new, const Vector2d& joint_value_new, const int& wheel_radius)
+void System::oneSLAMStep(LaserFrame::Ptr frame_new, const Vector2d& joint_value_new, const double& wheel_radius)
 {
   //compute control input 
   Vector2d u = (joint_value_new - joint_value_prev_)*wheel_radius;
@@ -59,16 +75,16 @@ void System::oneSLAMStep(LaserFrame::Ptr frame_new, const Vector2d& joint_value_
   //get unmatched LineSegment
   vector<int> unmatched_idx = ekfilter_->unmatched_idx;
   //convert LineSegment in laser frame to World frame
-  Vector3d T_l_w;
-  T_l_w(0) = -T_posterior(0) * cos(T_posterior(2)) - T_posterior(1) * sin(T_posterior(2));
-  T_l_w(1) =  T_posterior(0) * sin(T_posterior(2)) - T_posterior(1) * cos(T_posterior(2));
-  T_l_w(2) = -T_posterior(2);
+  Vector3d T_l_w = inverseT(T_posterior);
   //for every unmatched observation 
+  cout<<"Unmatched Observations"<<endl;
   for(int i=0; i<unmatched_idx.size(); i++){
+    cout<<unmatched_idx[i]<<endl;
     //convert unmatched observation from laser frame to world frame using the postrior estimation 
     z[unmatched_idx[i]].convertToFrameT(T_l_w);
     //add to the map, the covariance matrix just use r,
-    //can be modified to take state's covariance into account 
+    //can be modified to take state's covariance into account
+    //covariance propagation 
     map_->addOneLineSegment(z[unmatched_idx[i]],r);
   }
   //iterate, pass posterior estimation to prev 
@@ -84,6 +100,32 @@ void System::oneSLAMStep(LaserFrame::Ptr frame_new, const Vector2d& joint_value_
     //assume no map element is deleted
     P_prev_ = P_posterior;
   }
+  //output one slam step information 
+  cout<<"Current map size: "<<map_->size()<<endl;
 }
+void System::oneStateTransitionStep(const Vector2d& joint_value_new, const double& wheel_radius)
+{
+  //compute control input 
+  Vector2d u = (joint_value_new - joint_value_prev_)*wheel_radius;
+  joint_value_prev_ = joint_value_new;
+  cout<<u<<endl;
+  cout<<wheel_radius<<endl;
+  //state transition 
+  Vector3d T_prior;
+  MatrixXd P_prior;
+  //cout<<T_prev_<<endl;
+  //cout<<P_prev_<<endl;
+  ekfilter_->stateTransitionOneStep(T_prev_,u,P_prev_,T_prior,P_prior);
+  //update
+  T_prev_ = T_prior;
+  P_prev_ = P_prior;
+}
+
+const Vector3d& System::pose() const
+{
+  return T_prev_;
+}
+
+
 
 }

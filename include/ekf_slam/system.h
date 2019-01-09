@@ -25,7 +25,9 @@ public:
   //one system step 
   //1. extended kalman filter step 
   //2. update map 
-  void oneSLAMStep(LaserFrame::Ptr frame_new, const Vector2d& joint_value_new, const int& wheel_radius);
+  void oneSLAMStep(LaserFrame::Ptr frame_new, const Vector2d& joint_value_new, const double& wheel_radius);
+  void oneStateTransitionStep(const Vector2d& joint_value_new, const double& wheel_radius);
+  const Vector3d& pose() const;
 private:
   //Line detector 
   LineDetector::Ptr line_detector_;

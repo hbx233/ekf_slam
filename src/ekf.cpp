@@ -1,4 +1,5 @@
 #include "ekf_slam/ekf.h"
+#define PRINT 1
 namespace ekf_slam{
 EKFilter::EKFilter(double k, double b, double g)
  :k_(k),b_(b),g_(g),ekf_step_(0){}
@@ -78,6 +79,7 @@ void EKFilter::stateTransition(const MatrixXd& P_prev, const Vector2d& u)
   Q(1,1) = 0.0004;//k_ * std::abs(u(1));
   //compute covariance matrix for prior estimation
   P_prior = F_x * P_prev * F_x.transpose() + F_u * Q * F_u.transpose();
+
 }
 void EKFilter::predictMeasurementsFromPriorState(const vector<LineSegment>& map_prev)
 {
@@ -85,14 +87,9 @@ void EKFilter::predictMeasurementsFromPriorState(const vector<LineSegment>& map_
   bool isNegative;
   //compute H for every 
   for(int i = 0; i<map_prev.size(); i++){
-    cout<<i<<endl;
-    cout<<z_predict.size()<<endl;
-    cout<<map_prev.size()<<endl;
-    cout<<x_prior<<endl;
     //predict the measurement based on prior estimation of state: x_prior
     //map_prev[i].convertToFrameT(x_prior(0),x_prior(1),x_prior(2),z_predict[i],isNegative);
     z_predict[i] = map_prev[i].vectorInFrameT(x_prior.head<3>(),isNegative);
-    cout<<"*"<<endl;
     //compute the jacobian of predicted measurement 
     H[i](0,2) = -1;
     if(isNegative){
@@ -100,7 +97,7 @@ void EKFilter::predictMeasurementsFromPriorState(const vector<LineSegment>& map_
       //cout<<"Negative r"<<endl;
       H[i](1,0) = cos(map_prev[i].alpha_);
       H[i](1,1) = sin(map_prev[i].alpha_);
-      if(i>1){
+      if(i>=0){
         H[i](0,3+2*i) = 1;
         H[i](1,3+2*i) = -x_prior(0)*sin(map_prev[i].alpha_) + x_prior(1)*cos(map_prev[i].alpha_);
         H[i](1,3+2*i+1) = -1;
@@ -108,7 +105,7 @@ void EKFilter::predictMeasurementsFromPriorState(const vector<LineSegment>& map_
     } else{
       H[i](1,0) = -cos(map_prev[i].alpha_);
       H[i](1,1) = -sin(map_prev[i].alpha_);
-      if(i>1){
+      if(i>=0){
         H[i](0,3+2*i) = 1;
         H[i](1,3+2*i) = x_prior(0)*sin(map_prev[i].alpha_) - x_prior(1)*cos(map_prev[i].alpha_);
         H[i](1,3+2*i+1) = 1;
@@ -202,7 +199,34 @@ void EKFilter::ekfOneStep(const Vector3d& T_prev,const Vector2d& u, const vector
   }
   //increase filter step 
   ekf_step_++;
+#if PRINT
+  cout<<"Prior Estimation: "<<endl;
+  cout<<x_prior<<endl;
+  //cout<<P_prior<<endl;
+  cout<<"Predicted measurements"<<endl;
+  cout<<"Predicted measurements size: "<<z_predict.size()<<endl;
+  for(auto& z_p:z_predict){
+    cout<<z_p<<endl;
+  }
+  cout<<"Unmatched index of observation"<<endl;
+  cout<<"Unmatched size: "<<unmatched_idx.size()<<endl;
+  for(auto& um:unmatched_idx){
+    cout<<um<<endl;
+  }
+  cout<<"Posterior Estimation: "<<endl;
+  cout<<x_posterior<<endl;
+#endif
 }
+void EKFilter::stateTransitionOneStep(const Vector3d& T_prev, const Vector2d& u, const MatrixXd& P_prev, Vector3d& T_prior, MatrixXd& P_prior)
+{
+  cout<<"Running state transition"<<endl;
+  constructStateVector(T_prev,vector<LineSegment>(),P_prev);
+  initVectorAndMatrix();
+  stateTransition(P_prev,u);
+  T_prior = x_prior;
+  P_prior = this->P_prior;
+}
+
 
 
 

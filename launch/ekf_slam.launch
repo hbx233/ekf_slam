@@ -1,5 +1,5 @@
 <launch> 
-  <node name="ekf_slam" pkg="ekf_slam" type="run_ekf_slam" output="screen">
+  <node name="ekf_slam" pkg="ekf_slam" type="test_system" output="screen">
     <rosparam command="load" file="$(find ekf_slam)/config/config.yaml"/>
   </node>
 </launch>

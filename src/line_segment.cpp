@@ -5,7 +5,7 @@ void LineSegment::convertToFrameT(const Vector3d& T)
   bool isNegative;
   Vector2d line = vectorInFrameT(T,isNegative);
   alpha_ = line(0);
-  r_ = line(0);
+  r_ = line(1);
 }
 Vector2d LineSegment::vector() const
 {
@@ -14,11 +14,9 @@ Vector2d LineSegment::vector() const
 
 Vector2d LineSegment::vectorInFrameT(const Vector3d& T, bool& isNegative) const
 {
-  cout<<"*"<<endl;
   Vector2d line;
   line(0) = alpha_ - T(2);
   line(1) = r_ - T(0)*cos(alpha_) - T(1)*sin(alpha_);
-  cout<<"**"<<endl;
   if(line(1)<0){
     line(1) = -line(1);
     line(0) = line(0) + PI;
@@ -26,7 +24,6 @@ Vector2d LineSegment::vectorInFrameT(const Vector3d& T, bool& isNegative) const
   } else{
     isNegative = false;
   }
-  cout<<"***"<<endl;
   if(line(0)>PI){
     line(0) = line(0) - 2*PI;
   } 

@@ -24,9 +24,6 @@ void LineDetector::detect(const vector< Vector2d >& points_2d, vector< LineSegme
   //merge splitted line segments 
   vector<LineSegment> merged_line_segs = mergeColinearNeighbors(points_2d, splitted_line_segs);
   //filter out the short line segments
-  cout<<"**"<<endl;
-  cout<<splitted_line_segs.size()<<endl;
-  cout<<merged_line_segs.size()<<endl;
   for(int i=0; i<merged_line_segs.size(); i++){
     if((merged_line_segs[i].end_idx_-merged_line_segs[i].start_idx_)>=min_points_num_){
       line_segments.push_back(merged_line_segs[i]);
@@ -37,7 +34,6 @@ void LineDetector::detect(const vector< Vector2d >& points_2d, vector< LineSegme
 }
 LineSegment LineDetector::fitLine(const vector< Vector2d >& points_2d, const int& start_idx, const int& end_idx)
 {
-  cout<<"Fitting Line from point: "<<start_idx<<" to point: "<<end_idx<<endl;
   //find the reference point 
   //Note: end_idx refers to excluded end point
   Vector2d center_point = std::accumulate(points_2d.begin()+start_idx, points_2d.begin()+end_idx, Vector2d(0,0));
@@ -62,11 +58,9 @@ LineSegment LineDetector::fitLine(const vector< Vector2d >& points_2d, const int
     r = -r;
   }
   return LineSegment(alpha,r,start_idx,end_idx);
-  cout<<"Finish Line Fitting"<<endl;
 }
 int LineDetector::findSplitIndex(const vector<Vector2d>& points_2d,const LineSegment& line_segment)
 {
-  cout<<"Finding the split point"<<endl;
   if((line_segment.end_idx_-line_segment.start_idx_)<=2){
     //only contains 2 points or lesser 
     return -1;
@@ -105,12 +99,10 @@ int LineDetector::findSplitIndex(const vector<Vector2d>& points_2d,const LineSeg
   if(split_idx==line_segment.end_idx_){
     split_idx = line_segment.end_idx_-1;
   }
-  cout<<"Splitting at: "<<split_idx<<endl;
   return split_idx;
 }
 vector< LineSegment > LineDetector::splitLines(const vector< Vector2d >& points_2d, const int& start_idx, const int& end_idx)
 {
-  cout<<"Recursively Splitting the lines"<<endl;
   vector<LineSegment> line_segs;
   //fit a line on current segment 
   LineSegment line_seg = fitLine(points_2d, start_idx, end_idx);
@@ -134,11 +126,9 @@ vector< LineSegment > LineDetector::splitLines(const vector< Vector2d >& points_
     line_segs.push_back(line_seg);
     return line_segs;
   }
-  cout<<"End spliting the line"<<endl;
 }
 vector< LineSegment > LineDetector::mergeColinearNeighbors(const vector<Vector2d>& points_2d, const vector< LineSegment >& line_segments)
 {
-  cout<<"Begin to Merge LineSegment"<<endl;
   vector<LineSegment> merged_line_segments;
   //set the current line segment which is used to merge the following lines
   LineSegment curr_line_seg = line_segments[0];
@@ -171,8 +161,6 @@ vector< LineSegment > LineDetector::mergeColinearNeighbors(const vector<Vector2d
   }
   //add last line segment
   merged_line_segments.push_back(curr_line_seg);
-  cout<<"End Merging"<<endl;
-  cout<<"Merged to "<<merged_line_segments.size()<<" LineSegments"<<endl;
   return merged_line_segments;
 }
 void LineDetector::display_line_segments(const vector<Vector2d>& points_2d,const vector<LineSegment>& line_segments)

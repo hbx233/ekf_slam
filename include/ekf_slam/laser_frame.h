@@ -15,6 +15,7 @@ public:
 public:
   //LaserFrame(const unsigned long& id, const double& time_stamp=0, const vector<Vector2d>& laser_points=vector<Vector2d>(), const Vector3d& T_w_l = Vector3d());
   LaserFrame(const unsigned long& id, const double& time_stamp=0, const vector<Vector2d>& laser_points=vector<Vector2d>());
+  LaserFrame():id_(0),laser_points_(vector<Vector2d>()),line_segments_(vector<LineSegment>()){}
 };
 }
 #endif

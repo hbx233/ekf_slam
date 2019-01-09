@@ -73,6 +73,8 @@ public:
   //interface function 
   void ekfOneStep
     (const Vector3d& T_prev,const Vector2d& u, const vector<LineSegment>& z, const vector<Matrix2d>& R, const vector<LineSegment>& map_prev, const MatrixXd& P_prev, Vector3d& T_posterior, vector<LineSegment>& map_posterior, MatrixXd& P_posterior);
+  void stateTransitionOneStep
+    (const Vector3d& T_prev,const Vector2d& u, const MatrixXd& P_prev, Vector3d& T_prior, MatrixXd& P_prior);
 private: 
   long ekf_step_;//record how many steps have been processed in EkfFilter
   

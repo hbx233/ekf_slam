@@ -7,7 +7,7 @@ namespace ekf_slam{
 class Map{
 public:
   using Ptr = shared_ptr<Map>;
-  Map(){};
+  Map():line_segments_(vector<LineSegment>()),P_line_segments_(vector<Matrix2d>()) {};
   Map(const vector<LineSegment>& line_segments, const vector<Matrix2d>& P_line_segments);
 public:
   void addOneLineSegment(const LineSegment& line_segment, const Matrix2d& P_line_segment);
