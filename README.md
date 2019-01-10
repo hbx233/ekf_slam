@@ -32,10 +32,10 @@ roscore
 roslaunch ekf_slam ekf_slam.launch
 ```
 
-## Mathematical Derivation 
+## 5. Mathematical Derivation 
 The complete mathematical derivation of whole system can be found in _Mathematical Derivation.pdf_ file
 
-## Result:
+## 6. Result:
 
 The white line is ground truth of robot trajectory, and the yellow line is posterior estimation of robot trajectory. 
 
