@@ -12,6 +12,8 @@
 #include <algorithm>
 #include <fstream>
 #include <chrono>
+#include <termios.h>
+#include <stdio.h>
 using std::vector;
 using std::string;
 using std::pair;

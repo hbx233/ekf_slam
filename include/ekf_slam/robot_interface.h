@@ -13,6 +13,7 @@
 #include "sensor_msgs/LaserScan.h"
 #include "sensor_msgs/JointState.h"
 #include "geometry_msgs/Pose2D.h"
+
 namespace ekf_slam{
 
 class RobotInterface
@@ -37,6 +38,9 @@ public:
   //Cannot copy
   RobotInterface(const RobotInterface& ) = delete;
   RobotInterface& operator=(const RobotInterface& ) = delete;
+  ~RobotInterface(){
+    tcsetattr( STDIN_FILENO, TCSANOW, &oldt);  // restore old terminal settings
+  };
 public:
   /** 
    * Getters of robot configuration
@@ -87,7 +91,9 @@ public:
    * stand alone timing function, don't use the time stamp in laser frame
    */
   double getElapsedTimeFromLastCall();
-
+  void setVelocityFromKeyInput(const double& linear_scale, const double& angular_scale);
+private:
+  struct termios oldt,newt;
 private:
   //ros NodeHandle
   ros::NodeHandle nh_;

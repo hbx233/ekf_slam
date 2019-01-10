@@ -4,11 +4,24 @@ System::System(LineDetector::Ptr line_detector, EKFilter::Ptr ekfilter)
 :state_(State::INITIALIZING),line_detector_(line_detector),ekfilter_(ekfilter),frame_prev_(nullptr),map_(nullptr)
 {}
 Vector3d inverseT(const Vector3d& T){
+  //get inverse transformation 
   Vector3d T_inv;
   T_inv(0) = -T(0) * cos(T(2)) - T(1) * sin(T(2));
   T_inv(1) =  T(0) * sin(T(2)) - T(1) * cos(T(2));
   T_inv(2) = -T(2);
   return T_inv;
+}
+Matrix3d inverseTJacobian(const Vector3d& T){
+  //jacobian matrix of T_inv respective to T
+  Matrix3d cov_T_inv_T = Matrix3d::Zero();
+  cov_T_inv_T(0,0) = -cos(T(2));
+  cov_T_inv_T(0,1) = -sin(T(2));
+  cov_T_inv_T(0,2) = sin(T(2))*T(0) - cos(T(2))*T(1);
+  cov_T_inv_T(1,0) = sin(T(2));
+  cov_T_inv_T(1,1) = -cos(T(2));
+  cov_T_inv_T(1,2) = cos(T(2))*T(0) + sin(T(2))*T(1);
+  cov_T_inv_T(2,2) = -1;
+  return cov_T_inv_T;
 }
 void System::initSLAM(const Vector3d& T_init, LaserFrame::Ptr frame_init, const Matrix3d& P_T_init, const Vector2d& joint_value_init)
 {
@@ -55,7 +68,7 @@ void System::oneSLAMStep(LaserFrame::Ptr frame_new, const Vector2d& joint_value_
   //get observation covariance matrix 
   //just use fixed covariance, can be changed to be dependent on detection in future
   Matrix2d r = Matrix2d::Zero();
-  r(0,0) = 0.1; r(1,1) = 0.1;
+  r(0,0) = 0.05; r(1,1) = 0.05;
   vector<Matrix2d> R(z.size(),r);
   //posterior estimation
   Vector3d T_posterior;
@@ -75,17 +88,43 @@ void System::oneSLAMStep(LaserFrame::Ptr frame_new, const Vector2d& joint_value_
   //get unmatched LineSegment
   vector<int> unmatched_idx = ekfilter_->unmatched_idx;
   //convert LineSegment in laser frame to World frame
+  //T_l_w is the inverse of T_posterior estimation in SE2
   Vector3d T_l_w = inverseT(T_posterior);
+  //covariance matrix of T_l_w with respect to T
+  Matrix3d F_T = inverseTJacobian(T_posterior);
+  Matrix3d P_T_inv_posterior = F_T * P_posterior.block(0,0,3,3) * F_T.transpose();
   //for every unmatched observation 
   cout<<"Unmatched Observations"<<endl;
   for(int i=0; i<unmatched_idx.size(); i++){
     cout<<unmatched_idx[i]<<endl;
+    //cache the observation in laser frame 
+    Vector2d obs = z[unmatched_idx[i]].vector();
     //convert unmatched observation from laser frame to world frame using the postrior estimation 
-    z[unmatched_idx[i]].convertToFrameT(T_l_w);
-    //add to the map, the covariance matrix just use r,
-    //can be modified to take state's covariance into account
+    bool isNegative = z[unmatched_idx[i]].convertToFrameT(T_l_w);
+    //add to the map, take state's covariance into account, for mathematical please refer to "Mathematical Derivation"
+    //compute jacobian matrix of map entry in world frame wrt map entry in laser frame(observation in laser frame)
+    Matrix2d J_m_world_m_laser = Matrix2d::Zero();
+    J_m_world_m_laser(0,0) = 1; J_m_world_m_laser(0,1) = 0;
+    J_m_world_m_laser(1,0) = T_l_w(0) * sin(obs(0))- T_l_w(1) * cos(obs(0));
+    J_m_world_m_laser(1,1) = 1;
+    if(isNegative){
+      //flip the sign for negative r
+      J_m_world_m_laser(1,0) = -J_m_world_m_laser(1,0);
+      J_m_world_m_laser(1,1) = -J_m_world_m_laser(1,1);
+    }
+    //compute jacobian matrix of map entry in world frame wrt t_l_w
+    Matrix23d J_m_world_T_l_w = Matrix23d::Zero();
+    J_m_world_T_l_w(0,2) = -1;
+    J_m_world_T_l_w(1,0) = -cos(obs(0)); 
+    J_m_world_T_l_w(1,1) = -sin(obs(0));
+    if(isNegative){
+      J_m_world_T_l_w(1,0) = -J_m_world_T_l_w(1,0);
+      J_m_world_T_l_w(1,1) = -J_m_world_T_l_w(1,1);
+    }
     //covariance propagation 
-    map_->addOneLineSegment(z[unmatched_idx[i]],r);
+    Matrix2d cov_m = J_m_world_m_laser * r * J_m_world_m_laser.transpose() \
+                     + J_m_world_T_l_w * P_T_inv_posterior * J_m_world_T_l_w.transpose();
+    map_->addOneLineSegment(z[unmatched_idx[i]],cov_m);
   }
   //iterate, pass posterior estimation to prev 
   T_prev_ = T_posterior;

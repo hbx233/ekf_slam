@@ -23,7 +23,7 @@ int main(int argc, char** argv){
   double wheel_radius = robot->robotWheelDiameter()/2;
   cout<<wheel_radius<<endl;
   //create ekfilter
-  EKFilter::Ptr ekfilter = std::make_shared<EKFilter>(0.01,wheel_distance,std::sqrt(10));
+  EKFilter::Ptr ekfilter = std::make_shared<EKFilter>(0.005,wheel_distance,std::sqrt(10));
   //create LineDetect 
   LineDetector::Ptr line_detector = LineDetector::create(0.01,15);
   //create a slam system wrapper 
@@ -54,7 +54,7 @@ int main(int argc, char** argv){
 	  {
 	    Vector3d T_init(0,-2,1.5714);
 	    Matrix3d P_T_init = Matrix3d::Zero();
-	    P_T_init(0,0) = 0.1;P_T_init(1,1) = 0.1; P_T_init(2,2) = 0.1;
+	    P_T_init(0,0) = 0.01;P_T_init(1,1) = 0.01; P_T_init(2,2) = 0.01;
 #if ST
 	    //empty frame
 	    LaserFrame::Ptr empty_frame = std::make_shared<LaserFrame>();
@@ -64,7 +64,7 @@ int main(int argc, char** argv){
 	    system->initSLAM(T_init,frame_new,P_T_init,joint_value_new);
 #endif
 	    //set velocity 
-	    robot->setRobotVelocity(0.1,0);
+	    robot->setRobotVelocity(0,0);
 	    //set initial pose visualization
 	    robot->setEstimatedPose(T_init);
 	    robot->setEstimatedPoseVisibility(true);
@@ -72,6 +72,8 @@ int main(int argc, char** argv){
 	  }
 	  case System::State::RUNNING:
 	  {
+	    //set control input 
+	    robot->setVelocityFromKeyInput(0.8,0.5);
 #if EKF
 	    system->oneSLAMStep(frame_new,joint_value_new,wheel_radius);
 #endif	    

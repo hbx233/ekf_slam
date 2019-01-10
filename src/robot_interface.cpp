@@ -62,6 +62,13 @@ RobotInterface::RobotInterface(const ros::NodeHandle& nh)
   pub_left_wheel_vel_ = nh_.advertise<std_msgs::Float32>(topic_name_[l_vel],queue_size_[l_vel],true);
   pub_right_wheel_vel_ = nh_.advertise<std_msgs::Float32>(topic_name_[r_vel],queue_size_[r_vel],true);
   
+  tcgetattr( STDIN_FILENO, &oldt);           // save old settings
+  newt = oldt;
+  //newt.c_lflag &= ~(ICANON);                 // disable buffering      
+  newt.c_cc[VMIN] = 0; 
+  newt.c_cc[VTIME] = 0;
+  tcsetattr( STDIN_FILENO, TCSANOW, &newt);  // apply new settings
+  
   //Transfer to Initialized state
   state_ = State::Initialized;
 }
@@ -197,6 +204,36 @@ void RobotInterface::setTargetPoseVisibility(bool visible)
   }
 }
 
+void RobotInterface::setVelocityFromKeyInput(const double& linear_scale, const double& angular_scale)
+{
+  // get the next event from the keyboard  
+  cout<<"input"<<endl;
+  int c = getchar();
+  cout<<"block"<<endl;
+  double linear = 0;
+  double angular = 0;
+
+  switch(c)
+  {
+    case 'a':
+      ROS_DEBUG("LEFT");
+      angular = 1.0;
+      break;
+    case 'd':
+      ROS_DEBUG("RIGHT");
+      angular = -1.0;
+      break;
+    case 'w':
+      ROS_DEBUG("UP");
+      linear = 1.0;
+      break;
+    case 's':
+      ROS_DEBUG("DOWN");
+      linear = -1.0;
+      break;
+  }
+  setRobotVelocity(linear*linear_scale, angular*angular_scale);
+}
 
 
 void RobotInterface::setRobotVelocity(double v, double w)

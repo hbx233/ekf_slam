@@ -1,6 +1,6 @@
 #include "ekf_slam/line_segment.h"
 namespace ekf_slam {
-void LineSegment::convertToFrameT(const Vector3d& T)
+bool LineSegment::convertToFrameT(const Vector3d& T)
 {
   bool isNegative;
   Vector2d line = vectorInFrameT(T,isNegative);

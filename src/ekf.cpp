@@ -1,5 +1,5 @@
 #include "ekf_slam/ekf.h"
-#define PRINT 1
+#define PRINT 0
 namespace ekf_slam{
 EKFilter::EKFilter(double k, double b, double g)
  :k_(k),b_(b),g_(g),ekf_step_(0){}
@@ -75,8 +75,8 @@ void EKFilter::stateTransition(const MatrixXd& P_prev, const Vector2d& u)
   
   //Control input noise covariance matrix 
   Matrix2d Q = Matrix2d::Zero();
-  Q(0,0) = 0.0004;//k_ * std::abs(u(0));
-  Q(1,1) = 0.0004;//k_ * std::abs(u(1));
+  Q(0,0) = k_ * std::abs(u(0));
+  Q(1,1) = k_ * std::abs(u(1));
   //compute covariance matrix for prior estimation
   P_prior = F_x * P_prev * F_x.transpose() + F_u * Q * F_u.transpose();
 

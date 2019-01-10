@@ -18,7 +18,8 @@ public:
     :alpha_(alpha),r_(r),start_idx_(start_idx),end_idx_(end_idx){}
   
   //convert the LineSegment to Frame T, used to add mapping entry in Map class 
-  void convertToFrameT(const Vector3d& T);
+  //return if negative r occurs 
+  bool convertToFrameT(const Vector3d& T);
   //return alpha and r as a vector, used in ekf
   Vector2d vector() const;
   //return alpha and r observed in pose T, used in ekf
