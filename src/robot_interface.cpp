@@ -310,7 +310,6 @@ void RobotInterface::wheel_state_callback(const sensor_msgs::JointState& msg)
   wheel_joint_value_(1) = msg.position[1];//right wheel joint value
 }
 
-
 // Laser Scan Callback function 
 void RobotInterface::laser_scan_callback(const sensor_msgs::LaserScan& msg)
 {

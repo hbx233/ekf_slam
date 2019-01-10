@@ -112,7 +112,7 @@ void System::oneSLAMStep(LaserFrame::Ptr frame_new, const Vector2d& joint_value_
       J_m_world_m_laser(1,0) = -J_m_world_m_laser(1,0);
       J_m_world_m_laser(1,1) = -J_m_world_m_laser(1,1);
     }
-    //compute jacobian matrix of map entry in world frame wrt t_l_w
+    //compute jacobian matrix of map entry in world frame wrt T_l_w
     Matrix23d J_m_world_T_l_w = Matrix23d::Zero();
     J_m_world_T_l_w(0,2) = -1;
     J_m_world_T_l_w(1,0) = -cos(obs(0)); 
