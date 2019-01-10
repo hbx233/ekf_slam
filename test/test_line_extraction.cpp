@@ -26,6 +26,6 @@ int main(){
   LineDetector::Ptr line_detector_ptr=LineDetector::create(0.01,15);
   vector<LineSegment> line_segments;
   line_detector_ptr->detect(laser_frame.laser_points_,line_segments);
-  line_detector_ptr->display_line_segments(laser_frame.laser_points_,line_segments);
+  //line_detector_ptr->display_line_segments(laser_frame.laser_points_,line_segments);
   return 0;
 }

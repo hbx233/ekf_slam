@@ -38,15 +38,15 @@ using Matrix23d = Eigen::Matrix<double,2,3>;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 //Sophus
-#include <sophus/so2.h>
-#include <sophus/se2.h>
-using Sophus::SO2;
-using Sophus::SE2;
+//#include <sophus/so2.h>
+//#include <sophus/se2.h>
+//using Sophus::SO2;
+//using Sophus::SE2;
 //OpenCV, just to visualize the extracted line 
-#include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
+//#include <opencv2/core.hpp>
+//#include <opencv2/highgui.hpp>
+//#include <opencv2/imgproc.hpp>
 
 #define PI 3.14159265
-#define ERROR_MSG(msg) cout<<msg<<endl
+#define ERROR_MSG(msg) cout<<"[ERROR] "<<msg<<endl
 #endif

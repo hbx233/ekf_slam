@@ -13,7 +13,7 @@ public:
   //detect line segments from given 2d points(double) 
   void detect(const vector<Vector2d>& points_2d, vector<LineSegment>& line_segments);
   //display the line segments 
-  void display_line_segments(const vector<Vector2d>& points_2d, const vector<LineSegment>& line_segments);
+  //void display_line_segments(const vector<Vector2d>& points_2d, const vector<LineSegment>& line_segments);
 private:
   LineDetector(const double& distance_threshold, const int& min_points_num);
 private:

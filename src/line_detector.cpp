@@ -163,6 +163,8 @@ vector< LineSegment > LineDetector::mergeColinearNeighbors(const vector<Vector2d
   merged_line_segments.push_back(curr_line_seg);
   return merged_line_segments;
 }
+#if 0
+//used only for debug
 void LineDetector::display_line_segments(const vector<Vector2d>& points_2d,const vector<LineSegment>& line_segments)
 {
   int w = 1000;
@@ -196,4 +198,5 @@ void LineDetector::display_line_segments(const vector<Vector2d>& points_2d,const
   cv::imshow("Laser Points",img);
   cv::waitKey(0);
 }
+#endif
 }
