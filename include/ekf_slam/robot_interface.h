@@ -112,7 +112,8 @@ private:
   
   LaserFrame::Ptr laser_frame_ptr_;
   ros::Subscriber sub_laser_scan;
-  
+  bool valid_frame{false};
+    
   //relative pose of laser frame in robot reference frame 
   Vector3d T_robot_laser_;
   ros::Subscriber sub_T_robot_laser_;

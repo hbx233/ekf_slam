@@ -28,6 +28,7 @@ public:
   void oneSLAMStep(LaserFrame::Ptr frame_new, const Vector2d& joint_value_new, const double& wheel_radius);
   void oneStateTransitionStep(const Vector2d& joint_value_new, const double& wheel_radius);
   const Vector3d& pose() const;
+  const MatrixXd& P() const;
 private:
   //Line detector 
   LineDetector::Ptr line_detector_;

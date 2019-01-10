@@ -23,7 +23,7 @@ int main(int argc, char** argv){
   double wheel_radius = robot->robotWheelDiameter()/2;
   cout<<wheel_radius<<endl;
   //create ekfilter
-  EKFilter::Ptr ekfilter = std::make_shared<EKFilter>(0.005,wheel_distance,std::sqrt(10));
+  EKFilter::Ptr ekfilter = std::make_shared<EKFilter>(0.05,wheel_distance,std::sqrt(10));
   //create LineDetect 
   LineDetector::Ptr line_detector = LineDetector::create(0.01,15);
   //create a slam system wrapper 
@@ -31,6 +31,10 @@ int main(int argc, char** argv){
   
   //spin loop 
   long run_count=0;
+  shared_ptr<LaserFrame> frame_new=nullptr;
+  unsigned long frame_id_past;
+  unsigned int old_frame; //increase if requested frame is remain the same(not receiving data anymore)
+  Vector2d joint_value_new;
   while(ros::ok()){
     //fsm switch for robot state
     switch(robot->state_){
@@ -46,15 +50,28 @@ int main(int argc, char** argv){
 	cout<<"Robot is Running, receiving data"<<endl;
 	//received data streamd from robot
 	//1. collect all the data received from robot
-	shared_ptr<LaserFrame> frame_new = robot->getLaserFrame();
-	Vector2d joint_value_new = robot->getWheelJointValue();
+	frame_new = robot->getLaserFrame();
+	joint_value_new = robot->getWheelJointValue();
+	if(run_count == 0){
+	  frame_id_past = frame_new->id_;
+	} else{
+	  if(frame_id_past == frame_new->id_){
+	    old_frame ++;
+	    if(old_frame>10){
+	      robot->state_=RobotInterface::State::Initialized;
+	    }
+	  } else{
+	    old_frame=0;
+	  }
+	  frame_id_past = frame_new->id_;
+	}
 	//2. begin SLAM System fsm switch
 	switch(system->state_){
 	  case System::State::INITIALIZING:
 	  {
 	    Vector3d T_init(0,-2,1.5714);
 	    Matrix3d P_T_init = Matrix3d::Zero();
-	    P_T_init(0,0) = 0.01;P_T_init(1,1) = 0.01; P_T_init(2,2) = 0.01;
+	    P_T_init(0,0) = 0.001;P_T_init(1,1) = 0.001; P_T_init(2,2) = 0.001;
 #if ST
 	    //empty frame
 	    LaserFrame::Ptr empty_frame = std::make_shared<LaserFrame>();
@@ -73,7 +90,7 @@ int main(int argc, char** argv){
 	  case System::State::RUNNING:
 	  {
 	    //set control input 
-	    robot->setVelocityFromKeyInput(0.8,0.5);
+	    robot->setVelocityFromKeyInput(0.5,0.5);
 #if EKF
 	    system->oneSLAMStep(frame_new,joint_value_new,wheel_radius);
 #endif	    
@@ -82,17 +99,19 @@ int main(int argc, char** argv){
 #endif    
 	    //display the estimated pose 
 	    cout<<system->pose()<<endl;
+	    cout<<system->P().block(0,0,3,3)<<endl;
 	    robot->setEstimatedPose(system->pose());
 	    break;
 	  }
 	  case System::State::LOST:
 	  {
-	    //TODO:
 	    //Need to determine in which case the robot is lost(cannot get a good estimation of state)
 	    cout<<"Robot is Lost for state estimation"<<endl;
+	    //If lost, no return back
 	    break;
 	  }
 	}
+	run_count++;
 	break;
       }
       case RobotInterface::State::Lost:

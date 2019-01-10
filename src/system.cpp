@@ -68,7 +68,7 @@ void System::oneSLAMStep(LaserFrame::Ptr frame_new, const Vector2d& joint_value_
   //get observation covariance matrix 
   //just use fixed covariance, can be changed to be dependent on detection in future
   Matrix2d r = Matrix2d::Zero();
-  r(0,0) = 0.05; r(1,1) = 0.05;
+  r(0,0) = 0.1; r(1,1) = 0.1;
   vector<Matrix2d> R(z.size(),r);
   //posterior estimation
   Vector3d T_posterior;
@@ -165,6 +165,10 @@ const Vector3d& System::pose() const
   return T_prev_;
 }
 
+const MatrixXd& System::P() const
+{
+  return P_prev_;
+}
 
 
 }

@@ -64,7 +64,7 @@ RobotInterface::RobotInterface(const ros::NodeHandle& nh)
   
   tcgetattr( STDIN_FILENO, &oldt);           // save old settings
   newt = oldt;
-  //newt.c_lflag &= ~(ICANON);                 // disable buffering      
+  newt.c_lflag &= ~(ICANON);                 // disable buffering      
   newt.c_cc[VMIN] = 0; 
   newt.c_cc[VTIME] = 0;
   tcsetattr( STDIN_FILENO, TCSANOW, &newt);  // apply new settings
@@ -217,11 +217,11 @@ void RobotInterface::setVelocityFromKeyInput(const double& linear_scale, const d
   {
     case 'a':
       ROS_DEBUG("LEFT");
-      angular = 1.0;
+      angular = -1.0;
       break;
     case 'd':
       ROS_DEBUG("RIGHT");
-      angular = -1.0;
+      angular = 1.0;
       break;
     case 'w':
       ROS_DEBUG("UP");
