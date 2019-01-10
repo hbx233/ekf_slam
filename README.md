@@ -32,7 +32,8 @@ roscore
 roslaunch ekf_slam ekf_slam.launch
 ```
 
-
+## Mathematical Derivation 
+The complete mathematical derivation of whole system can be found in _Mathematical Derivation.pdf_ file
 
 ## Result:
 
