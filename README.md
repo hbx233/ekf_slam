@@ -1,8 +1,8 @@
-# Line-Based EKF SLAM System for Indoor Environment
+# Sparse Line-Based EKF SLAM System for Indoor Environment
 
 ## 1. Introduction:
 
-This project implemented an EKF SLAM system for indoor differential robot, which use laser range finder as its main sensor. Assume no prior knowledge of environment, can simultaneously build a map of lines and localize robot, no limitation of map size. 
+This project implemented an EKF SLAM system for indoor differential robot, which use laser range finder as its main sensor. Assume no prior knowledge of environment, can simultaneously build a map of sparse lines and localize robot, no limitation of map size. 
 
 ## 2. V-REP Simulation Environment: 
 
@@ -31,10 +31,12 @@ roscore
 ```shell
 roslaunch ekf_slam ekf_slam.launch
 ```
+Then use 'W' 'A' 'S' 'D' to control robot to move up, left, down and right
 
+## 5. Mathematical Derivation 
+The complete mathematical derivation of whole system can be found in _Mathematical Derivation.pdf_ file
 
-
-## Result:
+## 6. Result:
 
 The white line is ground truth of robot trajectory, and the yellow line is posterior estimation of robot trajectory. 
 
