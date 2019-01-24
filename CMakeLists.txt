@@ -14,8 +14,8 @@ find_package(Sophus REQUIRED)
 include_directories(${Sophus_INCLUDE_DIRS})
 
 ##OpenCV
-#find_package(OpenCV REQUIRED)
-#include_directories(${OpenCV_INCLUDE_DIRS})
+find_package(OpenCV REQUIRED)
+include_directories(${OpenCV_INCLUDE_DIRS})
 ##ROS
 ###Find catkin and catkin backages 
 find_package(catkin REQUIRED roscpp std_msgs sensor_msgs geometry_msgs)
